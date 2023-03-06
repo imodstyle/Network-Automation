@@ -1,0 +1,65 @@
+from netmiko import ConnectHandler
+import time
+import datetime
+import re
+
+print()
+print('Welcome to Network Automation with Netmiko!')
+print()
+
+#load file ip address
+ip_address_file = input('Enter file name contain host: ')
+
+def fetch_ip_addresses():
+    with open(ip_address_file) as devices:
+        addresses = devices.read().splitlines()
+    return addresses
+
+#array empty
+config_commands = []
+	
+#load file config
+input_cfg = input('Enter file name contain config: ')
+cfg_file = open(input_cfg,'r').readlines()
+	
+#isi file config di add ke array config_commands
+for config in cfg_file:
+    config_commands.append(config.strip())
+
+#First qounter
+t1 = time.perf_counter()
+
+def backup_rtr_configuration(address):
+    todays_date = datetime.datetime.now()
+    year = todays_date.year
+    day = todays_date.day
+    month = todays_date.month
+	
+    mikrotik_device_info = {
+        'ip': address,
+        'port': 22,
+        'username': 'admin',
+        'password': 'password',
+        'device_type': 'mikrotik_routeros',
+        'verbose': True
+    }
+
+    print(f'Connecting to host {address}...')
+    ssh_connection = ConnectHandler(**mikrotik_device_info)
+    
+    print(f'Doing configuration for host {address}...')
+    output = ssh_connection.send_config_set(config_commands)
+    
+    ssh_connection.disconnect()
+    return
+
+
+ip_addresses = fetch_ip_addresses()  
+for address in ip_addresses:
+  backup_rtr_configuration(address)
+
+#end qounter
+t2 = time.perf_counter()
+print()
+print(f'The script finished executing in {round(t2-t1,2)} seconds.')
+print()
